@@ -1,1 +1,1 @@
-mod binomial;
+pub mod binomial;

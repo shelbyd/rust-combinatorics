@@ -1,1 +1,1 @@
-mod combinatorics;
+pub mod combinatorics;

@@ -1,4 +1,4 @@
-struct Choose<T: Copy> {
+pub struct Choose<T: Copy> {
     vec: Vec<T>,
     k: usize,
     indices: Vec<usize>,
