@@ -4,4 +4,4 @@ name = "rust_combinatorics"
 version = "0.0.1"
 authors = ["Shelby Doolittle <shelby@shelbyd.com>"]
 description = "Combinatoric utilities and functions for rust"
-license = "UNLICENSE"
+license = "MIT"
