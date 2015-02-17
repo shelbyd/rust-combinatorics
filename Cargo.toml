@@ -1,5 +1,5 @@
 [package]
 
-name = "rust-combinatorics"
+name = "rust_combinatorics"
 version = "0.0.1"
 authors = ["Shelby Doolittle <shelby@shelbyd.com>"]
