@@ -104,7 +104,7 @@ mod tests {
         assert!(it.next().is_none());
     }
 
-    #[test] fn it_returns_each_item_combination_when_choosing_three_from_a_list_with_four_items() {
+    #[test] fn it_returns_each_item_combination_when_choosing_two_from_a_list_with_four_items() {
         let vector = vec![0, 1, 2, 3, 4];
         let mut it = vector.choose(2);
 
