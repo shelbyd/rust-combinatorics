@@ -1,11 +1,11 @@
-pub struct Choose<T: Copy> {
+pub struct Choose<T: Clone> {
     vec: Vec<T>,
     k: usize,
     indices: Vec<usize>,
     first: bool,
 }
 
-impl<T: Copy> Choose<T> {
+impl<T: Clone> Choose<T> {
     fn new(vec: Vec<T>, k: usize) -> Choose<T> {
         Choose {
             vec: vec,
@@ -20,10 +20,10 @@ impl<T: Copy> Choose<T> {
     }
 }
 
-impl<T: Copy> Iterator for Choose<T> {
+impl<T: Clone> Iterator for Choose<T> {
     type Item = Vec<T>;
 
-    fn next(&mut self) -> Option<Vec<T>> {
+    fn next(&mut self) -> Option<Self::Item> {
         match self.first {
             true => match self.n() < self.k {
                 true => None,
@@ -32,7 +32,7 @@ impl<T: Copy> Iterator for Choose<T> {
                     Some(
                         self.indices
                             .iter()
-                            .map(|&i| *self.vec.get(i).unwrap())
+                            .map(|&i| self.vec.get(i).unwrap().clone())
                             .collect(),
                     )
                 }
@@ -54,7 +54,7 @@ impl<T: Copy> Iterator for Choose<T> {
                         Some(
                             self.indices
                                 .iter()
-                                .map(|&i| *self.vec.get(i).unwrap())
+                                .map(|&i| self.vec.get(i).unwrap().clone())
                                 .collect(),
                         )
                     }
@@ -66,14 +66,14 @@ impl<T: Copy> Iterator for Choose<T> {
 
 pub trait Chooseable<T>
 where
-    T: Copy,
+    T: Clone,
 {
     fn choose(self, k: usize) -> Choose<T>;
 }
 
 impl<T: Copy> Chooseable<T> for Vec<T>
 where
-    T: Copy,
+    T: Clone,
 {
     fn choose(self, k: usize) -> Choose<T> {
         Choose::new(self, k)
