@@ -18,49 +18,53 @@ impl<T: Clone> Choose<T> {
     fn n(&self) -> usize {
         self.vec.len()
     }
+
+    fn from_indices(&self) -> Vec<T> {
+        self.indices.iter().map(|&i| self.vec[i].clone()).collect()
+    }
+
+    fn increment_indices(&mut self) -> Option<()> {
+        let to_increment = (0..self.k)
+            .rev()
+            .filter(|&i| {
+                let max_allowed = self.n() - self.k + i;
+                self.indices[i] < max_allowed
+            })
+            .next();
+        let to_increment = match to_increment {
+            None => return None,
+            Some(i) => i,
+        };
+
+        self.indices[to_increment] += 1;
+
+        for j in (to_increment + 1)..self.k {
+            let previous_index = self.indices[j - 1];
+            self.indices[j] = previous_index + 1;
+        }
+
+        Some(())
+    }
 }
 
 impl<T: Clone> Iterator for Choose<T> {
     type Item = Vec<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match self.first {
-            true => match self.n() < self.k {
-                true => None,
-                false => {
-                    self.first = false;
-                    Some(
-                        self.indices
-                            .iter()
-                            .map(|&i| self.vec.get(i).unwrap().clone())
-                            .collect(),
-                    )
-                }
-            },
-            false => {
-                let first_thing = (0..self.k)
-                    .rev()
-                    .filter(|&_i| *self.indices.get(_i).unwrap() != _i + self.n() - self.k)
-                    .take(1)
-                    .collect::<Vec<usize>>();
-                match first_thing.len() {
-                    0 => None,
-                    _ => {
-                        let i = first_thing[0];
-                        self.indices[i] += 1;
-                        for j in (i + 1)..self.k {
-                            self.indices[j] = self.indices[j - 1] + 1;
-                        }
-                        Some(
-                            self.indices
-                                .iter()
-                                .map(|&i| self.vec.get(i).unwrap().clone())
-                                .collect(),
-                        )
-                    }
-                }
-            }
+        if self.n() < self.k {
+            return None;
         }
+
+        if !self.first {
+            match self.increment_indices() {
+                None => return None,
+                Some(()) => {}
+            };
+        };
+
+        self.first = false;
+
+        Some(self.from_indices())
     }
 }
 
@@ -71,7 +75,7 @@ where
     fn choose(self, k: usize) -> Choose<T>;
 }
 
-impl<T: Copy> Chooseable<T> for Vec<T>
+impl<T> Chooseable<T> for Vec<T>
 where
     T: Clone,
 {
@@ -83,11 +87,12 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+
     #[test]
     fn it_returns_none_when_choosing_one_from_an_empty_list() {
         let vector: Vec<()> = vec![];
         let mut it = vector.choose(1);
-        assert!(it.next().is_none());
+        assert_eq!(it.next(), None);
     }
 
     #[test]
@@ -95,7 +100,7 @@ mod tests {
         let vector: Vec<()> = vec![];
         let mut it = vector.choose(0);
         assert_eq!(it.next().unwrap(), vec![]);
-        assert!(it.next().is_none());
+        assert_eq!(it.next(), None);
     }
 
     #[test]
@@ -103,7 +108,7 @@ mod tests {
         let vector = vec![0, 1, 2];
         let mut it = vector.choose(0);
         assert_eq!(it.next().unwrap().len(), 0);
-        assert!(it.next().is_none());
+        assert_eq!(it.next(), None);
     }
 
     #[test]
@@ -114,7 +119,7 @@ mod tests {
         assert_eq!(it.next().unwrap(), vec![0]);
         assert_eq!(it.next().unwrap(), vec![1]);
         assert_eq!(it.next().unwrap(), vec![2]);
-        assert!(it.next().is_none());
+        assert_eq!(it.next(), None);
     }
 
     #[test]
@@ -125,11 +130,11 @@ mod tests {
         assert_eq!(it.next().unwrap(), vec![0, 1]);
         assert_eq!(it.next().unwrap(), vec![0, 2]);
         assert_eq!(it.next().unwrap(), vec![1, 2]);
-        assert!(it.next().is_none());
+        assert_eq!(it.next(), None);
     }
 
     #[test]
-    fn it_returns_each_item_combination_when_choosing_two_from_a_list_with_four_items() {
+    fn it_returns_each_item_combination_when_choosing_two_from_a_list_with_five_items() {
         let vector = vec![0, 1, 2, 3, 4];
         let mut it = vector.choose(2);
 
@@ -143,6 +148,6 @@ mod tests {
         assert_eq!(it.next().unwrap(), vec![2, 3]);
         assert_eq!(it.next().unwrap(), vec![2, 4]);
         assert_eq!(it.next().unwrap(), vec![3, 4]);
-        assert!(it.next().is_none());
+        assert_eq!(it.next(), None);
     }
 }
