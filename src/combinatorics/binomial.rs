@@ -1,14 +1,14 @@
-pub struct Choose<T: Clone> {
-    vec: Vec<T>,
+pub struct Choose<'t, T: 't> {
+    list: &'t [T],
     k: usize,
     indices: Vec<usize>,
     first: bool,
 }
 
-impl<T: Clone> Choose<T> {
-    fn new(vec: Vec<T>, k: usize) -> Choose<T> {
+impl<'t, T> Choose<'t, T> {
+    fn new(list: &'t [T], k: usize) -> Choose<'t, T> {
         Choose {
-            vec: vec,
+            list: list,
             k: k,
             indices: (0..k).collect(),
             first: true,
@@ -16,11 +16,11 @@ impl<T: Clone> Choose<T> {
     }
 
     fn n(&self) -> usize {
-        self.vec.len()
+        self.list.len()
     }
 
-    fn from_indices(&self) -> Vec<T> {
-        self.indices.iter().map(|&i| self.vec[i].clone()).collect()
+    fn from_indices(&self) -> Vec<&'t T> {
+        self.indices.iter().map(|&i| &self.list[i]).collect()
     }
 
     fn increment_indices(&mut self) -> Option<()> {
@@ -47,8 +47,8 @@ impl<T: Clone> Choose<T> {
     }
 }
 
-impl<T: Clone> Iterator for Choose<T> {
-    type Item = Vec<T>;
+impl<'t, T> Iterator for Choose<'t, T> {
+    type Item = Vec<&'t T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.n() < self.k {
@@ -68,18 +68,12 @@ impl<T: Clone> Iterator for Choose<T> {
     }
 }
 
-pub trait Chooseable<T>
-where
-    T: Clone,
-{
-    fn choose(self, k: usize) -> Choose<T>;
+pub trait Chooseable<'t, T> {
+    fn choose(&'t self, k: usize) -> Choose<'t, T>;
 }
 
-impl<T> Chooseable<T> for Vec<T>
-where
-    T: Clone,
-{
-    fn choose(self, k: usize) -> Choose<T> {
+impl<'t, T> Chooseable<'t, T> for [T] {
+    fn choose(&'t self, k: usize) -> Choose<'t, T> {
         Choose::new(self, k)
     }
 }
@@ -87,6 +81,10 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn assert_next(it: &mut Choose<usize>, items: Vec<usize>) {
+        assert_eq!(it.next().unwrap(), items.iter().collect::<Vec<_>>());
+    }
 
     #[test]
     fn it_returns_none_when_choosing_one_from_an_empty_list() {
@@ -97,9 +95,9 @@ mod tests {
 
     #[test]
     fn it_returns_the_empty_vector_when_choosing_zero_from_an_empty_list() {
-        let vector: Vec<()> = vec![];
+        let vector: Vec<usize> = vec![];
         let mut it = vector.choose(0);
-        assert_eq!(it.next().unwrap(), vec![]);
+        assert_next(&mut it, vec![]);
         assert_eq!(it.next(), None);
     }
 
@@ -116,9 +114,9 @@ mod tests {
         let vector = vec![0, 1, 2];
         let mut it = vector.choose(1);
 
-        assert_eq!(it.next().unwrap(), vec![0]);
-        assert_eq!(it.next().unwrap(), vec![1]);
-        assert_eq!(it.next().unwrap(), vec![2]);
+        assert_next(&mut it, vec![0]);
+        assert_next(&mut it, vec![1]);
+        assert_next(&mut it, vec![2]);
         assert_eq!(it.next(), None);
     }
 
@@ -127,9 +125,9 @@ mod tests {
         let vector = vec![0, 1, 2];
         let mut it = vector.choose(2);
 
-        assert_eq!(it.next().unwrap(), vec![0, 1]);
-        assert_eq!(it.next().unwrap(), vec![0, 2]);
-        assert_eq!(it.next().unwrap(), vec![1, 2]);
+        assert_next(&mut it, vec![0, 1]);
+        assert_next(&mut it, vec![0, 2]);
+        assert_next(&mut it, vec![1, 2]);
         assert_eq!(it.next(), None);
     }
 
@@ -138,16 +136,16 @@ mod tests {
         let vector = vec![0, 1, 2, 3, 4];
         let mut it = vector.choose(2);
 
-        assert_eq!(it.next().unwrap(), vec![0, 1]);
-        assert_eq!(it.next().unwrap(), vec![0, 2]);
-        assert_eq!(it.next().unwrap(), vec![0, 3]);
-        assert_eq!(it.next().unwrap(), vec![0, 4]);
-        assert_eq!(it.next().unwrap(), vec![1, 2]);
-        assert_eq!(it.next().unwrap(), vec![1, 3]);
-        assert_eq!(it.next().unwrap(), vec![1, 4]);
-        assert_eq!(it.next().unwrap(), vec![2, 3]);
-        assert_eq!(it.next().unwrap(), vec![2, 4]);
-        assert_eq!(it.next().unwrap(), vec![3, 4]);
+        assert_next(&mut it, vec![0, 1]);
+        assert_next(&mut it, vec![0, 2]);
+        assert_next(&mut it, vec![0, 3]);
+        assert_next(&mut it, vec![0, 4]);
+        assert_next(&mut it, vec![1, 2]);
+        assert_next(&mut it, vec![1, 3]);
+        assert_next(&mut it, vec![1, 4]);
+        assert_next(&mut it, vec![2, 3]);
+        assert_next(&mut it, vec![2, 4]);
+        assert_next(&mut it, vec![3, 4]);
         assert_eq!(it.next(), None);
     }
 }
